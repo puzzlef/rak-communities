@@ -1,3 +1,4 @@
+#include <utility>
 #include <vector>
 #include <string>
 #include <cstdio>
@@ -9,26 +10,49 @@ using namespace std;
 
 
 
-template <class G, class H>
-void runPagerank(const G& x, const H& xt, int repeat) {
-  using T = float;
-  enum NormFunction { L0=0, L1=1, L2=2, Li=3 };
-  vector<T> *init = nullptr;
+// You can define datatype with -DTYPE=...
+#ifndef TYPE
+#define TYPE float
+#endif
 
-  // Find pagerank using a single thread (L1-norm, damping=0.85, tolerance=1E-6, maxIterations=500).
-  auto a0 = pagerankMonolithicSeq(x, xt, init, {repeat});
-  auto e0 = l1Norm(a0.ranks, a0.ranks);
-  printf("[%09.3f ms; %03d iters.] [%.4e err.] pagerankSeq\n", a0.time, a0.iterations, e0);
+
+
+
+template <class G, class K, class V>
+double getModularity(const G& x, const RakResult<K>& a, V M) {
+  auto fc = [&](auto u) { return a.membership[u]; };
+  return modularity(x, fc, M, V(1));
+}
+
+
+template <class G>
+void runExperiment(const G& x, int repeat) {
+  using K = typename G::key_type;
+  using V = typename G::edge_value_type;
+  vector<K> *init = nullptr;
+  auto M = edgeWeight(x)/2;
+  auto Q = modularity(x, M, 1.0f);
+  printf("[%01.6f modularity] noop\n", Q);
+  RakOptions o = {repeat};
+
+  // Find RAK using a single thread.
+  auto ak = rakSeqStatic(x, init, o);
+  printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStatic\n", ak.time, ak.iterations, getModularity(x, ak, M));
 }
 
 
 int main(int argc, char **argv) {
+  using K = int;
+  using V = TYPE;
   char *file = argv[1];
   int repeat = argc>2? stoi(argv[2]) : 5;
+  OutDiGraph<K, None, V> x;  // V w = 1;
   printf("Loading graph %s ...\n", file);
-  auto x  = readMtxOutDiGraph(file); println(x);
-  auto xt = transposeWithDegree(x);  print(xt); printf(" (transposeWithDegree)\n");
-  runPagerank(x, xt, repeat);
+  readMtxW<true>(x, file); println(x);
+  auto y = symmetricize(x); print(y); printf(" (symmetricize)\n");
+  // auto fl = [](auto u) { return true; };
+  // selfLoopU(y, w, fl); print(y); printf(" (selfLoopAllVertices)\n");
+  runExperiment(y, repeat);
   printf("\n");
   return 0;
 }
