@@ -1,5 +1,7 @@
 Single-threaded CPU-based PageRank (PR) algorithm ([pull], [CSR]).
 
+`TODO`
+
 All outputs are saved in [out](out/) and a small part of the output is listed
 here. Some [charts] are also included below, generated from [sheets]. The input
 data used for this experiment is available at the [SuiteSparse Matrix
