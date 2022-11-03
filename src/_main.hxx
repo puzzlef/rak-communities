@@ -1,4 +1,5 @@
 #pragma once
+#include "_debug.hxx"
 #include "_algorithm.hxx"
 #include "_cmath.hxx"
 #include "_ctypes.hxx"

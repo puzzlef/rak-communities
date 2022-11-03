@@ -6,6 +6,7 @@
 #include <utility>
 #include <array>
 #include <vector>
+#include "_debug.hxx"
 #include "_algorithm.hxx"
 
 using std::remove_reference_t;
@@ -87,10 +88,12 @@ inline void reorderU(vector<T>& x, vector<K> is) {
 
 template <class T>
 inline void eraseAtU(vector<T>& a, size_t i) {
+  ASSERT(i <= a.size());
   a.erase(a.begin()+i);
 }
 template <class T>
 inline void eraseRangeU(vector<T>& a, size_t i, size_t I) {
+  ASSERT(i <= a.size() && I<= a.size());
   a.erase(a.begin()+i, a.begin()+I);
 }
 
@@ -102,10 +105,12 @@ inline void eraseRangeU(vector<T>& a, size_t i, size_t I) {
 
 template <class T>
 inline void insertValueAtU(vector<T>& a, size_t i, const T& v) {
+  ASSERT(i <= a.size());
   a.insert(a.begin()+i, v);
 }
 template <class T>
 inline void insertValuesAtU(vector<T>& a, size_t i, size_t n, const T& v) {
+  ASSERT(i <= a.size());
   a.insert(a.begin()+i, n, v);
 }
 
@@ -209,7 +214,7 @@ void joinAt(const vector2d<T>& xs, const J& is, vector<T>& a) {
     copyAppend(xs[i], a);
 }
 template <class T, class J>
-inline void joinAtW(vector<T>& a, const vector2d<T>& xs, const J& is) {
+inline void joinAtU(vector<T>& a, const vector2d<T>& xs, const J& is) {
   joinAt(xs, is, a);
 }
 
@@ -279,20 +284,41 @@ inline auto joinAt2dVector(const vector2d<T>& xs, const J& ig) {
 // GATHER-VALUES
 // -------------
 
-template <class T, class J, class TA>
-void gatherValues(const T *x, const J& is, TA *a) {
+template <class T, class J, class TA, class FM>
+void gatherValues(const T *x, const J& is, TA *a, FM fm) {
+  ASSERT(x && a);
   size_t j = 0;
   for (auto i : is)
-    a[j++] = x[i];
+    a[j++] = TA(fm(x[i]));
+}
+template <class T, class J, class TA>
+void gatherValues(const T *x, const J& is, TA *a) {
+  ASSERT(x && a);
+  auto fm = [](auto v) { return v; };
+  gatherValues(x, is, a, fm);
+}
+template <class T, class J, class TA, class FM>
+inline void gatherValues(const vector<T>& x, const J& is, vector<TA>& a, FM fm) {
+  gatherValues(x.data(), is, a.data(), fm);
 }
 template <class T, class J, class TA>
 inline void gatherValues(const vector<T>& x, const J& is, vector<TA>& a) {
   gatherValues(x.data(), is, a.data());
 }
 
+template <class T, class J, class TA, class FM>
+inline void gatherValuesW(TA *a, const T *x, const J& is, FM fm) {
+  ASSERT(a && x);
+  gatherValues(x, is, a, fm);
+}
 template <class T, class J, class TA>
 inline void gatherValuesW(TA *a, const T *x, const J& is) {
+  ASSERT(a && x);
   gatherValues(x, is, a);
+}
+template <class T, class J, class TA, class FM>
+inline void gatherValuesW(vector<TA>& a, const vector<T>& x, const J& is, FM fm) {
+  gatherValues(x, is, a, fm);
 }
 template <class T, class J, class TA>
 inline void gatherValuesW(vector<TA>& a, const vector<T>& x, const J& is) {
@@ -305,24 +331,73 @@ inline void gatherValuesW(vector<TA>& a, const vector<T>& x, const J& is) {
 // SCATTER-VALUES
 // --------------
 
-template <class T, class J, class TA>
-void scatterValues(const T *x, const J& is, TA *a) {
+template <class T, class J, class TA, class FM>
+void scatterValues(const T *x, const J& is, TA *a, FM fm) {
+  ASSERT(x && a);
   size_t j = 0;
   for (auto i : is)
-    a[i] = x[j++];
+    a[i] = fm(x[j++]);
+}
+template <class T, class J, class TA>
+void scatterValues(const T *x, const J& is, TA *a) {
+  ASSERT(x && a);
+  auto fm = [](auto v) { return v; };
+  scatterValues(x, is, a, fm);
+}
+template <class T, class J, class TA, class FM>
+inline void scatterValues(const vector<T>& x, const J& is, vector<TA>& a, FM fm) {
+  scatterValues(x.data(), is, a.data(), fm);
 }
 template <class T, class J, class TA>
 inline void scatterValues(const vector<T>& x, const J& is, vector<TA>& a) {
   scatterValues(x.data(), is, a.data());
 }
 
+template <class T, class J, class TA, class FM>
+inline void scatterValuesW(TA *a, const T *x, const J& is, FM fm) {
+  ASSERT(a && x);
+  scatterValues(x, is, a, fm);
+}
 template <class T, class J, class TA>
 inline void scatterValuesW(TA *a, const T *x, const J& is) {
+  ASSERT(a && x);
   scatterValues(x, is, a);
+}
+template <class T, class J, class TA, class FM>
+inline void scatterValuesW(vector<TA>& a, const vector<T>& x, const J& is, FM fm) {
+  scatterValues(x, is, a, fm);
 }
 template <class T, class J, class TA>
 inline void scatterValuesW(vector<TA>& a, const vector<T>& x, const J& is) {
   scatterValues(x, is, a);
+}
+
+
+
+
+// GET-ALL
+// -------
+
+template <class T, class J, class TA>
+void getAll(const T *x, const J& is, TA *a) {
+  ASSERT(x && a);
+  size_t j = 0;
+  for (auto i : is)
+    a[j++] = x[i];
+}
+template <class T, class J, class TA>
+inline void getAll(const vector<T>& x, const J& is, vector<TA>& a) {
+  getAll(x.data(), is, a.data());
+}
+
+template <class TA, class T, class J>
+inline void getAllW(TA *a, const T *x, const J& is) {
+  ASSERT(a && x);
+  getAll(x, is, a);
+}
+template <class TA, class T, class J>
+inline void getAllW(vector<TA>& a, const vector<T>& x, const J& is) {
+  getAll(x, is, a);
 }
 
 
@@ -333,6 +408,7 @@ inline void scatterValuesW(vector<TA>& a, const vector<T>& x, const J& is) {
 
 template <class T, class TA>
 size_t copyValues(const T *x, TA *a, size_t N) {
+  ASSERT(x && a);
   for (size_t i=0; i<N; ++i)
     a[i] = x[i];
   return N;
@@ -346,15 +422,16 @@ inline size_t copyValues(const vector<T>& x, vector<TA>& a, size_t i, size_t N) 
   return copyValues(x.data()+i, a.data()+i, N);
 }
 
-template <class T, class TA>
+template <class TA, class T>
 inline size_t copyValuesW(TA *a, const T *x, size_t N) {
+  ASSERT(a && x);
   return copyValues(x, a, N);
 }
-template <class T, class TA>
+template <class TA, class T>
 inline size_t copyValuesW(vector<TA>& a, const vector<T>& x) {
   return copyValues(x, a);
 }
-template <class T, class TA>
+template <class TA, class T>
 inline size_t copyValuesW(vector<TA>& a, const vector<T>& x, size_t i, size_t N) {
   return copyValues(x, a, i, N);
 }
@@ -367,6 +444,7 @@ inline size_t copyValuesW(vector<TA>& a, const vector<T>& x, size_t i, size_t N)
 
 template <class T, class V>
 void fillValueU(T *a, size_t N, const V& v) {
+  ASSERT(a);
   fill(a, a+N, v);
 }
 template <class T, class V>
@@ -386,6 +464,7 @@ inline void fillValueU(vector<T>& a, size_t i, size_t N, const V& v) {
 
 template <class T, class J, class V>
 void fillValueAtU(T *a, const J& is, const V& v) {
+  ASSERT(a);
   for (auto i : is)
     a[i] = v;
 }
@@ -406,6 +485,7 @@ inline void fillValueAtU(vector<T>& a, size_t i, const J& is, const V& v) {
 
 template <class T, class V=T>
 V sumValues(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a += x[i];
   return a;
@@ -427,6 +507,7 @@ inline V sumValues(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class V=T>
 V sumAbsValues(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a += abs(x[i]);
   return a;
@@ -452,6 +533,7 @@ inline V sumAbsValues(const array<T, N>& x, V a=V()) {
 
 template <class T, class V=T>
 V sumSqrValues(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a += x[i]*x[i];
   return a;
@@ -473,6 +555,7 @@ inline V sumSqrValues(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class J, class V=T>
 V sumValuesAt(const T *x, const J& is, V a=V()) {
+  ASSERT(x);
   for (auto i : is)
     a += x[i];
   return a;
@@ -489,11 +572,34 @@ inline V sumValuesAt(const vector<T>& x, size_t i, const J& is, V a=V()) {
 
 
 
+// SUM-DELTAS
+// ----------
+
+template <class T, class V=T>
+V sumDeltas(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
+  for (size_t i=1; i<N; ++i)
+    a += x[i] - x[i-1];
+  return a;
+}
+template <class T, class V=T>
+inline V sumDeltas(const vector<T>& x, V a=V()) {
+  return sumDeltas(x.data(), x.size(), a);
+}
+template <class T, class V=T>
+inline V sumDeltas(const vector<T>& x, size_t i, size_t N, V a=V()) {
+  return sumDeltas(x.data()+i, N, a);
+}
+
+
+
+
 // ADD-VALUE
 // ---------
 
 template <class T, class V>
 void addValueU(T *a, size_t N, const V& v) {
+  ASSERT(a);
   for (size_t i=0; i<N; ++i)
     a[i] += v;
 }
@@ -514,6 +620,7 @@ inline void addValueU(vector<T>& a, size_t i, size_t N, const V& v) {
 
 template <class T, class J, class U>
 void addValueAtU(T *a, const J& is, const U& v) {
+  ASSERT(a);
   for (auto i : is)
     a[i] += v;
 }
@@ -534,6 +641,7 @@ inline void addValueAtU(vector<T>& a, size_t i, const J& is, const U& v) {
 
 template <class T, class V=T>
 V maxValue(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a = max(a, x[i]);
   return a;
@@ -555,6 +663,7 @@ inline V maxValue(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class V=T>
 V maxAbsValue(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a = max(a, abs(x[i]));
   return a;
@@ -576,6 +685,7 @@ inline V maxAbsValue(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class J, class V=T>
 V maxAt(const T *x, const J& is, V a=V()) {
+  ASSERT(x);
   for (auto i : is)
     a = max(a, x[i]);
   return a;
@@ -597,6 +707,7 @@ inline V maxAt(const vector<T>& x, size_t i, const J& is, V a=V()) {
 
 template <class T, class V>
 void constrainMaxU(T *a, size_t N, const V& v) {
+  ASSERT(a);
   for (size_t i=0; i<N; ++i)
     a[i] = max(a[i], v);
 }
@@ -617,6 +728,7 @@ inline void constrainMaxU(vector<T>& a, size_t i, size_t N, const V& v) {
 
 template <class T, class J, class V>
 void constrainMaxAtU(T *a, const J& is, const V& v) {
+  ASSERT(a);
   for (auto i : is)
     a[i] = max(a[i], v);
 }
@@ -637,6 +749,7 @@ inline void constrainMaxAtU(vector<T>& a, size_t i, const J& is, const V& v) {
 
 template <class T, class V=T>
 V minValue(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a = min(a, x[i]);
   return a;
@@ -658,6 +771,7 @@ inline V minValue(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class V=T>
 V minAbsValue(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
   for (size_t i=0; i<N; ++i)
     a = min(a, abs(x[i]));
   return a;
@@ -679,6 +793,7 @@ inline V minAbsValue(const vector<T>& x, size_t i, size_t N, V a=V()) {
 
 template <class T, class J, class V=T>
 V minValueAt(const T *x, const J& is, V a=V()) {
+  ASSERT(x);
   for (auto i : is)
     a = min(a, x[i]);
   return a;
@@ -700,6 +815,7 @@ inline V minValueAt(const vector<T>& x, size_t i, const J& is, V a=V()) {
 
 template <class T, class V>
 void constrainMinU(T *a, size_t N, const V& v) {
+  ASSERT(a);
   for (size_t i=0; i<N; ++i)
     a[i] = min(a[i], v);
 }
@@ -720,6 +836,7 @@ inline void constrainMinU(vector<T>& a, size_t i, size_t N, const V& v) {
 
 template <class T, class J, class V>
 void constrainMinAtU(T *a, const J& is, const V& v) {
+  ASSERT(a);
   for (auto i : is)
     a[i] = min(a[i], v);
 }
@@ -740,6 +857,7 @@ inline void constrainMinAtU(vector<T>& a, size_t i, const J& is, const V& v) {
 
 template <class TX, class TY, class V=TX>
 V l1Norm(const TX *x, const TY *y, size_t N, V a=V()) {
+  ASSERT(x && y);
   for (size_t i=0; i<N; i++)
     a += abs(x[i] - y[i]);
   return a;
@@ -754,6 +872,23 @@ inline V l1Norm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 }
 
 
+template <class T, class V=T>
+V l1Norm(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
+  for (size_t i=0; i<N; i++)
+    a += abs(x[i]);
+  return a;
+}
+template <class T, class V=T>
+inline V l1Norm(const vector<T>& x, V a=V()) {
+  return l1Norm(x.data(), x.size(), a);
+}
+template <class T, class V=T>
+inline V l1Norm(const vector<T>& x, size_t i, size_t N, V a=V()) {
+  return l1Norm(x.data()+i, N, a);
+}
+
+
 
 
 // L2-NORM
@@ -761,6 +896,7 @@ inline V l1Norm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 
 template <class TX, class TY, class V=TX>
 V l2Norm(const TX *x, const TY *y, size_t N, V a=V()) {
+  ASSERT(x && y);
   for (size_t i=0; i<N; i++)
     a += (x[i] - y[i]) * (x[i] - y[i]);
   return sqrt(a);
@@ -775,6 +911,23 @@ inline V l2Norm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 }
 
 
+template <class T, class V=T>
+V l2Norm(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
+  for (size_t i=0; i<N; i++)
+    a += x[i] * x[i];
+  return sqrt(a);
+}
+template <class T, class V=T>
+inline V l2Norm(const vector<T>& x, V a=V()) {
+  return l2Norm(x.data(), x.size(), a);
+}
+template <class T, class V=T>
+inline V l2Norm(const vector<T>& x, size_t i, size_t N, V a=V()) {
+  return l2Norm(x.data()+i, N, a);
+}
+
+
 
 
 // LI-NORM (INFINITY)
@@ -782,6 +935,7 @@ inline V l2Norm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 
 template <class TX, class TY, class V=TX>
 V liNorm(const TX *x, const TY *y, size_t N, V a=V()) {
+  ASSERT(x && y);
   for (size_t i=0; i<N; i++)
     a = max(a, abs(x[i] - y[i]));
   return a;
@@ -796,6 +950,23 @@ inline V liNorm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 }
 
 
+template <class T, class V=T>
+V liNorm(const T *x, size_t N, V a=V()) {
+  ASSERT(x);
+  for (size_t i=0; i<N; i++)
+    a = max(a, abs(x[i]));
+  return a;
+}
+template <class T, class V=T>
+inline V liNorm(const vector<T>& x, V a=V()) {
+  return liNorm(x.data(), x.size(), a);
+}
+template <class T, class V=T>
+inline V liNorm(const vector<T>& x, size_t i, size_t N, V a=V()) {
+  return liNorm(x.data()+i, N, a);
+}
+
+
 
 
 // MULTIPLY-VALUES
@@ -803,6 +974,7 @@ inline V liNorm(const vector<TX>& x, const vector<TY>& y, size_t i, size_t N, V 
 
 template <class TX, class TY, class TA>
 void multiplyValues(const TX *x, const TY *y, TA *a, size_t N) {
+  ASSERT(x && y && a);
   for (size_t i=0; i<N; i++)
     a[i] = x[i] * y[i];
 }
@@ -817,15 +989,51 @@ inline void multiplyValues(const vector<TX>& x, const vector<TY>& y, vector<TA>&
 
 template <class TA, class TX, class TY>
 inline void multiplyValuesW(TA *a, const TX *x, const TY *y, size_t N) {
+  ASSERT(a && x && y);
   multiplyValues(x, y, a, N);
 }
-template <class TX, class TY, class TA>
+template <class TA, class TX, class TY>
 inline void multiplyValuesW(vector<TA>& a, const vector<TX>& x, const vector<TY>& y) {
   multiplyValues(x, y, a);
 }
-template <class TX, class TY, class TA>
+template <class TA, class TX, class TY>
 inline void multiplyValuesW(vector<TA>& a, const vector<TX>& x, const vector<TY>& y, size_t i, size_t N) {
   multiplyValues(x, y, a, i, N);
+}
+
+
+
+
+// MULTIPLY-VALUES-POSITIVE
+// ------------------------
+
+template <class TX, class TY, class TA>
+void multiplyValuesPositive(const TX *x, const TY *y, TA *a, size_t N) {
+  ASSERT(x && y && a);
+  for (size_t i=0; i<N; i++)
+    a[i] = max(TA(x[i] * y[i]), TA());
+}
+template <class TX, class TY, class TA>
+inline void multiplyValuesPositive(const vector<TX>& x, const vector<TY>& y, vector<TA>& a) {
+  multiplyValuesPositive(x.data(), y.data(), a.data(), x.size());
+}
+template <class TX, class TY, class TA>
+inline void multiplyValuesPositive(const vector<TX>& x, const vector<TY>& y, vector<TA>& a, size_t i, size_t N) {
+  multiplyValuesPositive(x.data()+i, y.data()+i, a.data()+i, N);
+}
+
+template <class TA, class TX, class TY>
+inline void multiplyValuesPositiveW(TA *a, const TX *x, const TY *y, size_t N) {
+  ASSERT(a && x && y);
+  multiplyValuesPositive(x, y, a, N);
+}
+template <class TA, class TX, class TY>
+inline void multiplyValuesPositiveW(vector<TA>& a, const vector<TX>& x, const vector<TY>& y) {
+  multiplyValuesPositive(x, y, a);
+}
+template <class TA, class TX, class TY>
+inline void multiplyValuesPositiveW(vector<TA>& a, const vector<TX>& x, const vector<TY>& y, size_t i, size_t N) {
+  multiplyValuesPositive(x, y, a, i, N);
 }
 
 
@@ -836,6 +1044,7 @@ inline void multiplyValuesW(vector<TA>& a, const vector<TX>& x, const vector<TY>
 
 template <class T, class TA, class V>
 void multiplyValue(const T *x, TA *a, size_t N, const V& v) {
+  ASSERT(x && a);
   for (size_t i=0; i<N; i++)
     a[i] = TA(x[i] * v);
 }
@@ -850,13 +1059,92 @@ inline void multiplyValue(const vector<T>& x, vector<TA>& a, size_t i, size_t N,
 
 template <class TA, class T, class V>
 inline void multiplyValueW(TA *a, const T *x, size_t N, const V& v) {
+  ASSERT(a && x);
   multiplyValue(x, a, N, v);
 }
 template <class TA, class T, class V>
 inline void multiplyValueW(vector<TA>& a, const vector<T>& x, const V& v) {
   multiplyValue(x, a, v);
 }
-template <class T, class TA, class V>
+template <class TA, class T, class V>
 inline void multiplyValueW(vector<TA>& a, const vector<T>& x, size_t i, size_t N, const V& v) {
   multiplyValue(x, a, i, N, v);
+}
+
+
+
+
+// EXCLUSIVE-SCAN
+// --------------
+
+template <class T, class TA>
+void exclusiveScan(const T *x, TA *a, size_t N) {
+  ASSERT(x && a);
+  TA sum = TA();
+  for (size_t i=0; i<N; ++i) {
+    T v  = x[i];
+    a[i] = sum;
+    sum += v;
+  }
+}
+template <class T, class TA>
+inline void exclusiveScan(const vector<T>& x, vector<TA>& a) {
+  exclusiveScan(x.data(), a.data(), x.size());
+}
+template <class T, class TA>
+inline void exclusiveScan(const vector<T>& x, vector<TA>& a, size_t i, size_t N) {
+  exclusiveScan(x.data()+i, a.data()+i, N);
+}
+
+template <class TA, class T>
+inline void exclusiveScanW(TA *a, const T *x, size_t N) {
+  ASSERT(a && x);
+  exclusiveScan(x, a, N);
+}
+template <class TA, class T>
+inline void exclusiveScanW(vector<TA>& a, const vector<T>& x) {
+  exclusiveScan(x, a);
+}
+template <class TA, class T>
+inline void exclusiveScanW(vector<TA>& a, const vector<T>& x, size_t i, size_t N) {
+  exclusiveScan(x, a, i, N);
+}
+
+
+
+
+// INCLUSIVE-SCAN
+// --------------
+
+template <class T, class TA>
+void inclusiveScan(const T *x, TA *a, size_t N) {
+  ASSERT(x && a);
+  TA sum = TA();
+  for (size_t i=0; i<N; ++i) {
+    T v  = x[i];
+    sum += v;
+    a[i] = sum;
+  }
+}
+template <class T, class TA>
+inline void inclusiveScan(const vector<T>& x, vector<TA>& a) {
+  inclusiveScan(x.data(), a.data(), x.size());
+}
+template <class T, class TA>
+inline void inclusiveScan(const vector<T>& x, vector<TA>& a, size_t i, size_t N) {
+  inclusiveScan(x.data()+i, a.data()+i, N);
+}
+
+template <class TA, class T>
+inline void inclusiveScanW(TA *a, const T *x, size_t N) {
+  ASSERT(a && x);
+  inclusiveScan(x, a, N);
+}
+template <class TA, class T>
+inline void inclusiveScanW(vector<TA>& a, const vector<T>& x) {
+  inclusiveScan(x, a);
+}
+template <class TA, class T>
+inline void inclusiveScanW(vector<TA>& a, const vector<T>& x, size_t i, size_t N) {
+  inclusiveScan(x, a, i, N);
 }

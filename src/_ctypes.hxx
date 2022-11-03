@@ -1,9 +1,7 @@
 #pragma once
 #include <istream>
 #include <ostream>
-#include <utility>
 
-using std::pair;
 using std::istream;
 using std::ostream;
 
@@ -26,6 +24,11 @@ struct None {
   // Stream operators.
   friend istream& operator>>(istream& a, None& x) noexcept { return a; }
   friend ostream& operator<<(ostream& a, None x)  noexcept { return a; }
+
+  // Lifetime operators.
+  explicit None() {}
+  template <class T>
+  explicit None(T _) {}
 };
 #define NONE None
 #endif

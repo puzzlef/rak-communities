@@ -1,17 +1,21 @@
 #pragma once
+#include <utility>
 #include <type_traits>
 #include <iterator>
 #include <algorithm>
 #include <functional>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include "_queue.hxx"
 
 using std::remove_reference_t;
 using std::iterator_traits;
 using std::vector;
 using std::unordered_map;
+using std::map;
 using std::hash;
+using std::move;
 using std::distance;
 using std::for_each;
 using std::any_of;
@@ -19,11 +23,15 @@ using std::all_of;
 using std::find;
 using std::find_if;
 using std::lower_bound;
+using std::adjacent_find;
 using std::count;
 using std::count_if;
 using std::back_inserter;
+using std::equal;
 using std::copy;
 using std::transform;
+using std::remove;
+using std::remove_if;
 using std::sort;
 using std::reverse;
 using std::set_difference;
@@ -43,7 +51,6 @@ inline auto first_value(I ib, I ie) {
   T a = ib != ie? *ib : T();
   return a;
 }
-
 template <class J>
 inline auto firstValue(const J& x) {
   return first_value(x.begin(), x.end());
@@ -180,6 +187,23 @@ inline size_t lowerFindAt(const J& x, const T& v, FL fl, FE fe) {
 
 
 
+// ADJACENT-FIND
+// -------------
+
+template <class J>
+inline size_t adjacentFind(const J& x) {
+  auto   it = adjacent_find(x.begin(), x.end());
+  return it - x.begin();
+}
+template <class J, class FE>
+inline size_t adjacentFind(const J& x, FE fe) {
+  auto   it = adjacent_find(x.begin(), x.end(), fe);
+  return it - x.begin();
+}
+
+
+
+
 // EQUAL-*
 // -------
 // Check if values match.
@@ -306,31 +330,31 @@ inline auto groupValues(const J& x, M& a) {
 
 
 template <class I, class FM>
-inline auto group_values_unordered_map(I ib, I ie, FM fm) {
+inline auto group_values_map(I ib, I ie, FM fm) {
   using K = remove_reference_t<decltype(fm(*ib))>;
   using V = typename iterator_traits<I>::value_type;
-  unordered_map<K, vector<V>> a;
+  map<K, vector<V>> a;
   return group_values(ib, ie, a, fm);
 }
 template <class I>
-inline auto group_values_unordered_map(I ib, I ie) {
+inline auto group_values_map(I ib, I ie) {
   auto fm = [](const auto& v) { return v; };
-  return group_values_unordered_map(ib, ie, fm);
+  return group_values_map(ib, ie, fm);
 }
 template <class J, class FM>
-inline auto groupValuesUnorderedMap(const J& x, FM fm) {
-  return group_values_unordered_map(x.begin(), x.end(), fm);
+inline auto groupValuesMap(const J& x, FM fm) {
+  return group_values_map(x.begin(), x.end(), fm);
 }
 template <class J>
-inline auto groupValuesUnorderedMap(const J& x) {
-  return group_values_unordered_map(x.begin(), x.end());
+inline auto groupValuesMap(const J& x) {
+  return group_values_map(x.begin(), x.end());
 }
 
 
 template <class I, class FM>
 inline auto group_values_vector(I ib, I ie, FM fm) {
   using V = typename iterator_traits<I>::value_type; vector<vector<V>> a;
-  auto gs = group_values_unordered_map(ib, ie, fm);
+  auto gs = group_values_map(ib, ie, fm);
   for (const auto& [k, g] : gs)
     a.push_back(move(g));
   return a;
@@ -572,6 +596,102 @@ inline auto transformVector(const JX& x, FM fm) {
 template <class JX, class JY, class FM>
 inline auto transformVector(const JX& x, const JY& y, FM fm) {
   return transform_vector(x.begin(), x.end(), y.begin(), fm);
+}
+
+
+
+
+// REMOVE
+// ------
+// Remove overpriced stocks from your portfolio.
+
+template <class I, class T>
+inline auto remove_value(I ib, I ie, const T& v) {
+  return remove(ib, ie, v);
+}
+template <class J, class T>
+inline size_t removeValue(const J& x, const T& v) {
+  auto it = remove_value(x.begin(), x.end(), v);
+  return it - x.begin();
+}
+
+
+template <class J, class F>
+inline size_t removeIf(const J& x, F fn) {
+  auto it = remove_if(x.begin(), x.end(), fn);
+  return it - x.begin();
+}
+
+
+
+
+// FILTER-IF
+// ---------
+
+template <class I, class F>
+auto filter_if(I ib, I ie, I ia, F fn) {
+  for (; ib!=ie; ++ib) {
+    if (!fn(*ib)) continue;
+    if (ia!=ib) *ia = move(*ib);
+    ++ia;
+  }
+  return ia;
+}
+template <class I, class F>
+inline auto filter_if(I ib, I ie, F fn) {
+  return filter_if(ib, ie, ib, fn);
+}
+
+template <class J, class F>
+inline size_t filterIf(J& a, F fn) {
+  auto it = filter_if(a.begin(), a.end(), fn);
+  return it - a.begin();
+}
+
+
+template <class I, class F>
+inline auto pairs_filter_if(I ib, I ie, I ia, F fn) {
+  auto ft = [&](const auto& p) { return fn(p.first, p.second); };
+  return filter_if(ib, ie, ia, ft);
+}
+template <class I, class F>
+inline auto pairs_filter_if_key(I ib, I ie, I ia, F fn) {
+  auto ft = [&](const auto& p) { return fn(p.first); };
+  return filter_if(ib, ie, ia, ft);
+}
+template <class I, class F>
+inline auto pairs_filter_if_value(I ib, I ie, I ia, F fn) {
+  auto ft = [&](const auto& p) { return fn(p.second); };
+  return filter_if(ib, ie, ia, ft);
+}
+
+template <class I, class F>
+inline auto pairs_filter_if(I ib, I ie, F fn) {
+  return pairs_filter_if(ib, ie, ib, fn);
+}
+template <class I, class F>
+inline auto pairs_filter_if_key(I ib, I ie, F fn) {
+  return pairs_filter_if_key(ib, ie, ib, fn);
+}
+template <class I, class F>
+inline auto pairs_filter_if_value(I ib, I ie, F fn) {
+  return pairs_filter_if_value(ib, ie, ib, fn);
+}
+
+template <class J, class F>
+inline auto pairsFilterIf(J& a, F fn) {
+  auto it = pairs_filter_if(a.begin(), a.end(), fn);
+  return it - a.begin();
+}
+template <class J, class F>
+inline auto pairsFilterIfKey(J& a, F fn) {
+  auto it = pairs_filter_if_key(a.begin(), a.end(), fn);
+  return it - a.begin();
+}
+template <class J, class F>
+inline auto pairsFilterIfValue(J& a, F fn) {
+  auto it = pairs_filter_if_value(a.begin(), a.end(), fn);
+  return it - a.begin();
 }
 
 
