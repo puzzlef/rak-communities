@@ -32,10 +32,11 @@ K rakMoveIteration(vector<K>& vcs, vector<V>& vcout, vector<K>& vcom, const G& x
   K a = K();
   x.forEachVertexKey([&](auto u) {
     if (!fa(u)) return;
+    K d = vdom[u];
     rakClearScan(vcs, vcout);
     rakScanCommunities(vcs, vcout, x, u, vdom);
-    auto [c, w] = rakChooseCommunity(x, u, vdom, vcs, vcout);
-    if (c) { vcom[u] = c; ++a; fp(u); }
+    auto [c, w] = rakChooseCommunity<true>(x, u, vdom, vcs, vcout);
+    if (c && c!=d) { vcom[u] = c; ++a; fp(u); }
   });
   return a;
 }
@@ -58,6 +59,7 @@ RakResult<K> rakSeq(const G& x, const vector<K>* q, const RakOptions& o, FA fa, 
     rakInitialize(vdom, x);
     for (l=0; l<o.maxIterations;) {
       K n = rakMoveIteration(vcs, vcout, !ASYNC? vcom : vdom, x, vdom, fa, fp); ++l;
+      PRINTFD("rakSeq(): l=%d, n=%d, N=%d, n/N=%f\n", l, n, N, float(n)/N);
       if (float(n)/N <= o.tolerance) break;
       if (!ASYNC) swap(vcom, vdom);
     }

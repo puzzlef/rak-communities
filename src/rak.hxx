@@ -21,7 +21,7 @@ struct RakOptions {
   float tolerance;
   int   maxIterations;
 
-  RakOptions(int repeat=1, float tolerance=0.05, int maxIterations=500) :
+  RakOptions(int repeat=1, float tolerance=0.05, int maxIterations=20) :
   repeat(repeat), tolerance(tolerance), maxIterations(maxIterations) {}
 };
 

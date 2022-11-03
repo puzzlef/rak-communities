@@ -35,9 +35,6 @@ void runExperiment(const G& x, int repeat) {
   printf("[%01.6f modularity] noop\n", Q);
   RakOptions o = {repeat};
 
-  // Find RAK using a single thread (synchronous).
-  auto ak = rakSeqStatic(x, init, o);
-  printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticSync\n",  ak.time, ak.iterations, getModularity(x, ak, M));
   // Find RAK using a single thread (asynchronous).
   auto al = rakSeqStatic<true>(x, init, o);
   printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticAsync\n", al.time, al.iterations, getModularity(x, al, M));
@@ -48,7 +45,7 @@ int main(int argc, char **argv) {
   using K = int;
   using V = TYPE;
   char *file = argv[1];
-  int repeat = argc>2? stoi(argv[2]) : 5;
+  int repeat = argc>2? stoi(argv[2]) : 1;
   OutDiGraph<K, None, V> x;  // V w = 1;
   printf("Loading graph %s ...\n", file);
   readMtxW<true>(x, file); println(x);
