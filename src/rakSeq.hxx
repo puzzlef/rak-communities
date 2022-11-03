@@ -64,15 +64,15 @@ RakResult<K> rakSeq(const G& x, const vector<K>* q, const RakOptions& o, FA fa, 
   }, o.repeat);
   return {vdom, l, t};
 }
-template <class G, class K, class V, class FA>
-inline auto rakSeq(const G& x, const vector<K>* q, const RakOptions& o, FA fa) {
+template <bool ASYNC=false, class G, class K, class FA>
+inline RakResult<K> rakSeq(const G& x, const vector<K>* q, const RakOptions& o, FA fa) {
   auto fp = [](auto u) {};
-  return rakSeq(x, q, o, fa, fp);
+  return rakSeq<ASYNC>(x, q, o, fa, fp);
 }
-template <class G, class K, class V>
-inline auto rakSeq(const G& x, const vector<K>* q, const RakOptions& o) {
+template <bool ASYNC=false, class G, class K>
+inline RakResult<K> rakSeq(const G& x, const vector<K>* q, const RakOptions& o) {
   auto fa = [](auto u) { return true; };
-  return rakSeq(x, q, o, fa);
+  return rakSeq<ASYNC>(x, q, o, fa);
 }
 
 
@@ -82,7 +82,7 @@ inline auto rakSeq(const G& x, const vector<K>* q, const RakOptions& o) {
 // --------------
 
 template <bool ASYNC=false, class G, class K>
-inline auto rakSeqStatic(const G& x, const vector<K>* q=nullptr, const RakOptions& o={}) {
+inline RakResult<K> rakSeqStatic(const G& x, const vector<K>* q=nullptr, const RakOptions& o={}) {
   return rakSeq<ASYNC>(x, q, o);
 }
 
@@ -92,13 +92,13 @@ inline auto rakSeqStatic(const G& x, const vector<K>* q=nullptr, const RakOption
 // RAK-SEQ-DYNAMIC-DELTA-SCREENING
 // -------------------------------
 
-template <class G, class K, class V>
-inline auto rakSeqDynamicDeltaScreening(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>* q, const RakOptions& o={}) {
+template <bool ASYNC=false, class G, class K, class V>
+inline RakResult<K> rakSeqDynamicDeltaScreening(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>* q, const RakOptions& o={}) {
   K S = x.span();
   const vector<K>& vcom = *q;
   auto vaff = rakAffectedVerticesDeltaScreening(x, deletions, insertions, vcom);
   auto fa   = [&](auto u) { return vaff[u]==true; };
-  return rakSeq(x, q, o, fa);
+  return rakSeq<ASYNC>(x, q, o, fa);
 }
 
 
@@ -107,12 +107,12 @@ inline auto rakSeqDynamicDeltaScreening(const G& x, const vector<tuple<K, K>>& d
 // RAK-SEQ-DYNAMIC-FRONTIER
 // ------------------------
 
-template <class G, class K, class V>
-inline auto rakSeqDynamicFrontier(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>* q, const RakOptions& o={}) {
+template <bool ASYNC=false, class G, class K, class V>
+inline RakResult<K> rakSeqDynamicFrontier(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>* q, const RakOptions& o={}) {
   K S = x.span();
   const vector<K>& vcom = *q;
   auto vaff = rakAffectedVerticesFrontier(x, deletions, insertions, vcom);
   auto fa = [&](auto u) { return vaff[u]==true; };
   auto fp = [&](auto u) { x.forEachEdgeKey(u, [&](auto v) { vaff[v] = true; }); };
-  return rakSeq(x, q, o, fa, fp);
+  return rakSeq<ASYNC>(x, q, o, fa, fp);
 }

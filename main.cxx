@@ -21,7 +21,7 @@ using namespace std;
 template <class G, class K, class V>
 double getModularity(const G& x, const RakResult<K>& a, V M) {
   auto fc = [&](auto u) { return a.membership[u]; };
-  return modularity(x, fc, M, V(1));
+  return modularityBy(x, fc, M, V(1));
 }
 
 
@@ -35,9 +35,12 @@ void runExperiment(const G& x, int repeat) {
   printf("[%01.6f modularity] noop\n", Q);
   RakOptions o = {repeat};
 
-  // Find RAK using a single thread.
+  // Find RAK using a single thread (synchronous).
   auto ak = rakSeqStatic(x, init, o);
-  printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStatic\n", ak.time, ak.iterations, getModularity(x, ak, M));
+  printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticSync\n",  ak.time, ak.iterations, getModularity(x, ak, M));
+  // Find RAK using a single thread (asynchronous).
+  auto al = rakSeqStatic<true>(x, init, o);
+  printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticAsync\n", al.time, al.iterations, getModularity(x, al, M));
 }
 
 
