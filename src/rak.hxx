@@ -4,6 +4,7 @@
 #include "_main.hxx"
 
 using std::pair;
+using std::tuple;
 using std::vector;
 using std::make_pair;
 using std::move;
@@ -128,4 +129,93 @@ inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, con
     if (vcout[c]>wmax) { cmax = c; wmax = vcout[c]; }
   }
   return make_pair(cmax, wmax);
+}
+
+
+
+
+// RAK-AFFECTED-VERTICES-DELTA-SCREENING
+// -------------------------------------
+// Using delta-screening approach.
+// - All edge batches are undirected, and sorted by source vertex-id.
+// - For edge additions across communities with source vertex `i` and highest modularity changing edge vertex `j*`,
+//   `i`'s neighbors and `j*`'s community is marked as affected.
+// - For edge deletions within the same community `i` and `j`,
+//   `i`'s neighbors and `j`'s community is marked as affected.
+
+/**
+ * Find the vertices which should be processed upon a batch of edge insertions and deletions.
+ * @param x original graph
+ * @param deletions edge deletions for this batch update (undirected, sorted by source vertex id)
+ * @param insertions edge insertions for this batch update (undirected, sorted by source vertex id)
+ * @param vcom community each vertex belongs to
+ * @returns flags for each vertex marking whether it is affected
+ */
+template <class FLAG=bool, class G, class K, class V>
+auto rakAffectedVerticesDeltaScreening(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>& vcom) {
+  K S = x.span();
+  vector<K> vcs; vector<V> vcout(S);
+  vector<FLAG> vertices(S), neighbors(S), communities(S);
+  for (const auto& [u, v] : deletions) {
+    if (vcom[u] != vcom[v]) continue;
+    vertices[u]  = true;
+    neighbors[u] = true;
+    communities[vcom[v]] = true;
+  }
+  for (size_t i=0; i<insertions.size();) {
+    K u = get<0>(insertions[i]);
+    rakClearScan(vcs, vcout);
+    for (; i<insertions.size() && get<0>(insertions[i])==u; ++i) {
+      K v = get<1>(insertions[i]);
+      V w = get<2>(insertions[i]);
+      if (vcom[u] == vcom[v]) continue;
+      rakScanCommunity(vcs, vcout, u, v, w, vcom);
+    }
+    auto [c, w] = rakChooseCommunity(x, u, vcom, vcs, vcout);
+    if (!c) continue;
+    vertices[u]  = true;
+    neighbors[u] = true;
+    communities[c] = true;
+  }
+  x.forEachVertexKey([&](auto u) {
+    if (neighbors[u]) x.forEachEdgeKey(u, [&](auto v) { vertices[v] = true; });
+    if (communities[vcom[u]]) vertices[u] = true;
+  });
+  return vertices;
+}
+
+
+
+
+// RAK-AFFECTED-VERTICES-FRONTIER
+// ------------------------------
+// Using frontier based approach.
+// - All source and destination vertices are marked as affected for insertions and deletions.
+// - For edge additions across communities with source vertex `i` and destination vertex `j`,
+//   `i` is marked as affected.
+// - For edge deletions within the same community `i` and `j`,
+//   `i` is marked as affected.
+// - Vertices whose communities change in local-moving phase have their neighbors marked as affected.
+
+/**
+ * Find the vertices which should be processed upon a batch of edge insertions and deletions.
+ * @param x original graph
+ * @param deletions edge deletions for this batch update (undirected, sorted by source vertex id)
+ * @param insertions edge insertions for this batch update (undirected, sorted by source vertex id)
+ * @param vcom community each vertex belongs to
+ * @returns flags for each vertex marking whether it is affected
+ */
+template <class FLAG=bool, class G, class K, class V>
+auto rakAffectedVerticesFrontier(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>& vcom) {
+  K S = x.span();
+  vector<FLAG> vertices(S);
+  for (const auto& [u, v] : deletions) {
+    if (vcom[u] != vcom[v]) continue;
+    vertices[u]  = true;
+  }
+  for (const auto& [u, v, w] : insertions) {
+    if (vcom[u] == vcom[v]) continue;
+    vertices[u]  = true;
+  }
+  return vertices;
 }
