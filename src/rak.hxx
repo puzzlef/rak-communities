@@ -120,15 +120,14 @@ inline void rakClearScan(vector<K>& vcs, vector<V>& vcout) {
  * @param vcout total edge weight from vertex u to community C
  * @returns [best community, best edge weight to community]
  */
-template <bool SELF=false, class G, class K, class V>
+template <bool STRICT=false, class G, class K, class V>
 inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, const vector<K>& vcs, const vector<V>& vcout) {
   K d = vcom[u];
   K cmax = K();
   V wmax = V();
   for (K c : vcs) {
-    if (!SELF && c==d) continue;
     // Do some basic randomization if multiple labels have max weight.
-    if (vcout[c]>wmax || (vcout[c]==wmax && (c & 2))) { cmax = c; wmax = vcout[c]; }
+    if (vcout[c]>wmax || (!STRICT && vcout[c]==wmax && (c & 2))) { cmax = c; wmax = vcout[c]; }
   }
   return make_pair(cmax, wmax);
 }
@@ -153,7 +152,7 @@ inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, con
  * @param vcom community each vertex belongs to
  * @returns flags for each vertex marking whether it is affected
  */
-template <class FLAG=bool, class G, class K, class V>
+template <bool STRICT=false, class FLAG=bool, class G, class K, class V>
 auto rakAffectedVerticesDeltaScreening(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>& vcom) {
   K S = x.span();
   vector<K> vcs; vector<V> vcout(S);
@@ -173,8 +172,8 @@ auto rakAffectedVerticesDeltaScreening(const G& x, const vector<tuple<K, K>>& de
       if (vcom[u] == vcom[v]) continue;
       rakScanCommunity(vcs, vcout, u, v, w, vcom);
     }
-    auto [c, w] = rakChooseCommunity(x, u, vcom, vcs, vcout);
-    if (!c) continue;
+    auto [c, w] = rakChooseCommunity<STRICT>(x, u, vcom, vcs, vcout);
+    if (!c || c == vcom[u]) continue;
     vertices[u]  = true;
     neighbors[u] = true;
     communities[c] = true;

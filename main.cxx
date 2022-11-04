@@ -37,12 +37,12 @@ void runExperiment(const G& x, int repeat) {
 
   for (int i=0, f=10; f<=10000; f*=i&1? 5:2, ++i) {
     float tolerance = 1.0f / f;
-    // Find RAK using a single thread (synchronous).
+    // Find RAK using a single thread (non-strict).
     auto ak = rakSeqStatic<false>(x, init, {repeat, tolerance});
-    printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticSync  {tolerance=%.0e}\n", ak.time, ak.iterations, getModularity(x, ak, M), tolerance);
-    // Find RAK using a single thread (asynchronous).
+    printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStatic       {tolerance=%.0e}\n", ak.time, ak.iterations, getModularity(x, ak, M), tolerance);
+    // Find RAK using a single thread (strict).
     auto al = rakSeqStatic<true>(x, init, {repeat, tolerance});
-    printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticAsync {tolerance=%.0e}\n", al.time, al.iterations, getModularity(x, al, M), tolerance);
+    printf("[%09.3f ms; %04d iters.; %01.9f modularity] rakSeqStaticStrict {tolerance=%.0e}\n", al.time, al.iterations, getModularity(x, al, M), tolerance);
   }
 }
 
