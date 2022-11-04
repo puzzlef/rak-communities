@@ -3,8 +3,9 @@ const os = require('os');
 const path = require('path');
 
 const RGRAPH = /^Loading graph .*\/(.*?)\.mtx \.\.\./m;
-const RORDER = /^order: (\d+) size: (\d+) \{\}/m;
-const RRESLT = /^\[(.+?) ms; (\d+) iters\.\] \[(.+?) err\.\] (\w+)/m;
+const RORDER = /^order: (\d+) size: (\d+) (?:\[\w+\] )?\{\} \(symmetricize\)/m;
+const RORGNL = /^\[(\S+?) modularity\] noop/;
+const RRESLT = /^\[(\S+?) ms; (\d+) iters\.; (\S+?) modularity\] (\w+)(?:\s+\{tolerance=(\S+?)\})?/m;
 
 
 
@@ -53,13 +54,24 @@ function readLogLine(ln, data, state) {
     state.order = parseFloat(order);
     state.size  = parseFloat(size);
   }
-  else if (RRESLT.test(ln)) {
-    var [, time, iterations, error, technique] = RRESLT.exec(ln);
+  else if (RORGNL.test(ln)) {
+    var [, modularity] = RORGNL.exec(ln);
     data.get(state.graph).push(Object.assign({}, state, {
-      time:       parseFloat(time),
-      iterations: parseFloat(iterations),
-      error:      parseFloat(error),
-      technique
+      time:        0,
+      iterations:  0,
+      modularity:  parseFloat(modularity),
+      technique:   'noop',
+      tolerance:   0,
+    }));
+  }
+  else if (RRESLT.test(ln)) {
+    var [, time, iterations, modularity, technique, tolerance] = RRESLT.exec(ln);
+    data.get(state.graph).push(Object.assign({}, state, {
+      time:        parseFloat(time),
+      iterations:  parseFloat(iterations),
+      modularity:  parseFloat(modularity),
+      technique,
+      tolerance:   parseFloat(tolerance),
     }));
   }
   return state;
@@ -80,7 +92,6 @@ function readLog(pth) {
 
 // PROCESS-*
 // ---------
-
 
 function processCsv(data) {
   var a = [];
