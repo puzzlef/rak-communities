@@ -127,7 +127,8 @@ inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, con
   V wmax = V();
   for (K c : vcs) {
     if (!SELF && c==d) continue;
-    if (vcout[c]>wmax) { cmax = c; wmax = vcout[c]; }
+    // Do some basic randomization if multiple labels have max weight.
+    if (vcout[c]>wmax || (vcout[c]==wmax && (c & 2))) { cmax = c; wmax = vcout[c]; }
   }
   return make_pair(cmax, wmax);
 }
