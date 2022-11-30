@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 src="rak-communities-seq"
 out="/home/resources/Documents/subhajit/$src.log"
+ulimit -c unlimited
 ulimit -s unlimited
 printf "" > "$out"
 

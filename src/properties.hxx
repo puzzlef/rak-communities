@@ -91,8 +91,8 @@ inline double density(const G& x) {
  * @returns total outgoing weight of a vertex
  */
 template <class G, class K>
-inline auto edgeWeight(const G& x, K u) {
-  using E = typename G::edge_value_type; E a = E();
+inline double edgeWeight(const G& x, K u) {
+  double a = 0;
   x.forEachEdgeValue(u, [&](auto w) { a += w; });
   return a;
 }
@@ -104,8 +104,8 @@ inline auto edgeWeight(const G& x, K u) {
  * @returns total edge weight (undirected graph => each edge considered twice)
  */
 template <class G>
-auto edgeWeight(const G& x) {
-  using E = typename G::edge_value_type; E a = E();
+inline double edgeWeight(const G& x) {
+  double a = 0;
   x.forEachVertexKey([&](auto u) { a += edgeWeight(x, u); });
   return a;
 }

@@ -76,7 +76,7 @@ inline void rakInitialize(vector<K>& vcom, const G& x) {
  * @param vcom community each vertex belongs to
  */
 template <bool SELF=false, class K, class V>
-inline void rakScanCommunity(vector<K>& vcs, vector<V>& vcout, K u, K v, V w, const vector<K>& vcom) {
+inline void rakScanCommunity(vector<K>& vcs, vector<double>& vcout, K u, K v, V w, const vector<K>& vcom) {
   if (!SELF && u==v) return;
   K c = vcom[v];
   if (!vcout[c]) vcs.push_back(c);
@@ -92,8 +92,8 @@ inline void rakScanCommunity(vector<K>& vcs, vector<V>& vcout, K u, K v, V w, co
  * @param u given vertex
  * @param vcom community each vertex belongs to
  */
-template <bool SELF=false, class G, class K, class V>
-inline void rakScanCommunities(vector<K>& vcs, vector<V>& vcout, const G& x, K u, const vector<K>& vcom) {
+template <bool SELF=false, class G, class K>
+inline void rakScanCommunities(vector<K>& vcs, vector<double>& vcout, const G& x, K u, const vector<K>& vcom) {
   x.forEachEdge(u, [&](auto v, auto w) { rakScanCommunity<SELF>(vcs, vcout, u, v, w, vcom); });
 }
 
@@ -103,10 +103,10 @@ inline void rakScanCommunities(vector<K>& vcs, vector<V>& vcout, const G& x, K u
  * @param vcs total edge weight from vertex u to community C (updated)
  * @param vcout communities vertex u is linked to (updated)
  */
-template <class K, class V>
-inline void rakClearScan(vector<K>& vcs, vector<V>& vcout) {
+template <class K>
+inline void rakClearScan(vector<K>& vcs, vector<double>& vcout) {
   for (K c : vcs)
-    vcout[c] = V();
+    vcout[c] = 0.0;
   vcs.clear();
 }
 
@@ -120,11 +120,11 @@ inline void rakClearScan(vector<K>& vcs, vector<V>& vcout) {
  * @param vcout total edge weight from vertex u to community C
  * @returns [best community, best edge weight to community]
  */
-template <bool STRICT=false, class G, class K, class V>
-inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, const vector<K>& vcs, const vector<V>& vcout) {
+template <bool STRICT=false, class G, class K>
+inline pair<K, double> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, const vector<K>& vcs, const vector<double>& vcout) {
   K d = vcom[u];
-  K cmax = K();
-  V wmax = V();
+  K      cmax = 0;
+  double wmax = 0.0;
   for (K c : vcs) {
     // Do some basic randomization if multiple labels have max weight.
     if (vcout[c]>wmax || (!STRICT && vcout[c]==wmax && (c & 2))) { cmax = c; wmax = vcout[c]; }
@@ -155,7 +155,7 @@ inline pair<K, V> rakChooseCommunity(const G& x, K u, const vector<K>& vcom, con
 template <bool STRICT=false, class FLAG=bool, class G, class K, class V>
 auto rakAffectedVerticesDeltaScreening(const G& x, const vector<tuple<K, K>>& deletions, const vector<tuple<K, K, V>>& insertions, const vector<K>& vcom) {
   size_t S = x.span();
-  vector<K> vcs; vector<V> vcout(S);
+  vector<K> vcs; vector<double> vcout(S);
   vector<FLAG> vertices(S), neighbors(S), communities(S);
   for (const auto& [u, v] : deletions) {
     if (vcom[u] != vcom[v]) continue;

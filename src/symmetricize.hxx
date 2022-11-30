@@ -6,6 +6,14 @@
 // SYMMETRICIZE
 // ------------
 
+template <class G>
+void symmetricizeU(G& a) {
+  a.forEachVertexKey([&](auto u) {
+    a.forEachEdge(u, [&](auto v, auto w) { a.addEdge(v, u, w); });
+  });
+  a.correct();
+}
+
 template <class H, class G>
 void symmetricizeW(H& a, const G& x) {
   x.forEachVertex([&](auto u, auto d) { a.addVertex(u, d); });

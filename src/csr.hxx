@@ -38,7 +38,7 @@ inline auto sourceOffsets(const G& x) {
 // -------------------
 
 template <class G, class KS>
-auto destinationIndicesAs(const G& x, const KS& ks) {
+auto destinationIndices(const G& x, const KS& ks) {
   using K = typename G::key_type;
   auto ids = valueIndicesUnorderedMap(ks); vector<K> a;
   for (auto u : ks)
@@ -46,8 +46,8 @@ auto destinationIndicesAs(const G& x, const KS& ks) {
   return a;
 }
 template <class G>
-auto destinationIndicesAs(const G& x) {
-  return destinationIndicesAs(x, x.vertexKeys());
+auto destinationIndices(const G& x) {
+  return destinationIndices(x, x.vertexKeys());
 }
 
 
@@ -163,7 +163,7 @@ auto csrGraph(const vector<size_t>& xv, const vector<K>& xe) {
 // CSR-SUM-EDGE-VALUES
 // -------------------
 
-template <class K, class V>
+template <class K, class V=double>
 V csrSumEdgeValues(const size_t *xv, const K *xd, const V *xw, size_t N, V a=V()) {
   for (size_t u=0; u<N; ++u) {
     size_t OFF = xv[u];

@@ -27,8 +27,8 @@ using std::swap;
  * @param vdom community each vertex belonged to
  * @returns number of changed vertices
  */
-template <bool STRICT=false, class G, class K, class V, class FA, class FP>
-size_t rakMoveIteration(vector<K>& vcs, vector<V>& vcout, vector<K>& vcom, const G& x, FA fa, FP fp) {
+template <bool STRICT=false, class G, class K, class FA, class FP>
+size_t rakMoveIteration(vector<K>& vcs, vector<double>& vcout, vector<K>& vcom, const G& x, FA fa, FP fp) {
   size_t a = 0;
   x.forEachVertexKey([&](auto u) {
     if (!fa(u)) return;
@@ -49,12 +49,11 @@ size_t rakMoveIteration(vector<K>& vcs, vector<V>& vcout, vector<K>& vcom, const
 
 template <bool STRICT=false, class G, class K, class FA, class FP>
 RakResult<K> rakSeq(const G& x, const vector<K>* q, const RakOptions& o, FA fa, FP fp) {
-  using V = typename G::edge_value_type;
   int l = 0;
   size_t S = x.span();
   size_t N = x.order();
   vector<K> vcom(S), vcs;
-  vector<V> vcout(S);
+  vector<double> vcout(S);
   float t = measureDuration([&]() {
     rakInitialize(vcom, x);
     for (l=0; l<o.maxIterations;) {
