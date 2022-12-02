@@ -53,11 +53,12 @@ int main(int argc, char **argv) {
   using V = TYPE;
   install_sigsegv();
   char *file = argv[1];
-  int repeat = argc>2? stoi(argv[2]) : 5;
+  bool sym   = argc>2? stoi(argv[2]) : false;
+  int repeat = argc>3? stoi(argv[3]) : 5;
   OutDiGraph<K, None, V> x;  // V w = 1;
   printf("Loading graph %s ...\n", file);
   readMtxW(x, file); println(x);
-  symmetricizeU(x); print(x); printf(" (symmetricize)\n");
+  if (!sym) { symmetricizeU(x); print(x); printf(" (symmetricize)\n"); }
   // auto fl = [](auto u) { return true; };
   // selfLoopU(y, w, fl); print(y); printf(" (selfLoopAllVertices)\n");
   runExperiment(x, repeat);

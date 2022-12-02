@@ -6,12 +6,15 @@
 // SYMMETRICIZE
 // ------------
 
-template <class G>
+template <bool CHK=false, class G>
 void symmetricizeU(G& a) {
   a.forEachVertexKey([&](auto u) {
-    a.forEachEdge(u, [&](auto v, auto w) { a.addEdge(v, u, w); });
+    if (u % 1000000==0) printf("symmetricizeU(): adding edges u=%zu\n", size_t(u));
+    if (!CHK) a.forEachEdge(u, [&](auto v, auto w) { a.addEdge(v, u, w); });
+    else a.forEachEdge(u, [&](auto v, auto w) { if (!a.hasEdge(v, u)) a.addEdge(v, u, w); });
   });
-  a.correct();
+  printf("symmetricizeU(): performing correct()\n");
+  a.correct(CHK);
 }
 
 template <class H, class G>
